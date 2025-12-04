@@ -1,3 +1,4 @@
+use petname::Generator;
 use rand::{
   SeedableRng,
   rngs::StdRng,
@@ -15,7 +16,7 @@ use snafu::{
 use crate::graph::AcyclicGraph;
 
 pub struct Config {
-  pub name: String,
+  pub name: Option<String>,
   pub deepth: usize,
   pub width_mean: f64,
   pub width_std: f64,
@@ -37,12 +38,19 @@ pub fn generate(cfg: &Config) -> Result<AcyclicGraph, Error> {
     StdRng::from_rng(&mut rand::rng())
   };
 
+  let petnames = petname::Petnames::default();
+
   let width_dist =
     Normal::new(cfg.width_mean, cfg.width_std).context(RandNormalDistributionSnafu)?;
   let child_dist =
     Normal::new(cfg.child_mean, cfg.child_std).context(RandNormalDistributionSnafu)?;
 
-  let mut graph = AcyclicGraph::new(cfg.name.clone());
+  let name = cfg.name.as_ref().cloned().unwrap_or_else(|| {
+    petnames
+      .generate(&mut rng, 2, "_")
+      .unwrap_or_else(|| "output".to_string())
+  });
+  let mut graph = AcyclicGraph::new(name);
 
   let root = graph.add_node("Root".to_string(), "I'm the root of all evil");
   let mut todo = vec![root.0];
@@ -63,7 +71,8 @@ pub fn generate(cfg: &Config) -> Result<AcyclicGraph, Error> {
         } else {
           i += 1;
         }
-        let (uuid, _) = graph.add_node(None, ());
+        let name = petnames.generate(&mut rng, 1, "_");
+        let (uuid, _) = graph.add_node(name, ());
         graph.add_child(node, uuid).unwrap();
         next_todo.push(uuid);
       }

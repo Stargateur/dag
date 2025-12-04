@@ -33,8 +33,8 @@ pub struct Args {
   #[arg(long)]
   seed: Option<u64>,
 
-  #[arg(long, default_value = "output")]
-  name: String,
+  #[arg(long)]
+  name: Option<String>,
 }
 
 #[derive(clap::ValueEnum, Clone, Debug)]

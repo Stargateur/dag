@@ -192,9 +192,14 @@ pub struct Dot<'a> {
 impl Display for Dot<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     writeln!(f, "digraph \"{}\" {{", self.graph.name)?;
-    write!(f, "  graph [rankdir = \"LR\"]\n\n")?;
+    write!(f, "  node [shape = box]\n")?;
+    write!(f, "  graph [rankdir = TB]\n\n")?;
     for parent in &self.graph.nodes {
       write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
+      if let Some(name) = &parent.1.name {
+        write!(f, " [label=\"{}\"];\n", name)?;
+        write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
+      }
 
       let mut childrens = parent.1.childs.iter();
       if let Some(first) = childrens.next() {
@@ -216,10 +221,17 @@ pub struct Mermaid<'a> {
 
 impl Display for Mermaid<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    write!(f, "---\ntitle: {}\n---\n", self.graph.name)?;
-    writeln!(f, "flowchart LR")?;
+    write!(f, "---\n")?;
+    write!(f, "title: {}\n", self.graph.name)?;
+    write!(f, "flowchart:\n")?;
+    write!(f, "  curve: stepAfter\n")?;
+    write!(f, "---\n")?;
+    write!(f, "flowchart TB\n")?;
     for parent in &self.graph.nodes {
       write!(f, "  {}", ShortUuid::from_uuid(parent.0))?;
+      if let Some(name) = &parent.1.name {
+        write!(f, "[{}]", name)?;
+      }
 
       let mut childrens = parent.1.childs.iter();
       if let Some(child) = childrens.next() {
