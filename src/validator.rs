@@ -73,7 +73,7 @@ fn deepths(graph: &AcyclicGraph, parents: &HashMap<Uuid, HashSet<Uuid>>) -> Hash
     let mut next_queue = HashSet::new();
 
     for uuid in &queue {
-      if let Some(parents) = parents.get(&uuid) {
+      if let Some(parents) = parents.get(uuid) {
         for parent in parents {
           max_deepth
             .entry(*parent)

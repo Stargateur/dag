@@ -191,7 +191,7 @@ pub struct Dot<'a> {
 
 impl Display for Dot<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    write!(f, "digraph \"{}\" {{\n", self.graph.name)?;
+    writeln!(f, "digraph \"{}\" {{", self.graph.name)?;
     write!(f, "  graph [rankdir = \"LR\"]\n\n")?;
     for parent in &self.graph.nodes {
       write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
@@ -204,9 +204,9 @@ impl Display for Dot<'_> {
         }
         write!(f, "}}")?;
       }
-      write!(f, ";\n")?;
+      writeln!(f, ";")?;
     }
-    write!(f, "}}\n")
+    writeln!(f, "}}")
   }
 }
 
@@ -217,7 +217,7 @@ pub struct Mermaid<'a> {
 impl Display for Mermaid<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "---\ntitle: {}\n---\n", self.graph.name)?;
-    write!(f, "flowchart LR\n")?;
+    writeln!(f, "flowchart LR")?;
     for parent in &self.graph.nodes {
       write!(f, "  {}", ShortUuid::from_uuid(parent.0))?;
 
@@ -228,7 +228,7 @@ impl Display for Mermaid<'_> {
           write!(f, " & {}", ShortUuid::from_uuid(child))?;
         }
       }
-      write!(f, "\n")?;
+      writeln!(f)?;
     }
     Ok(())
   }
@@ -237,12 +237,13 @@ impl Display for Mermaid<'_> {
 #[cfg(test)]
 mod tests {
   use super::*;
+
   #[test]
   fn test_add_node() {
     let mut graph = AcyclicGraph::new("Test Graph");
-    let (uuid, node) = graph.add_node("Node 1".to_string(), "This is some data");
+    let (uuid, node) = graph.add_node("Node".to_string(), "This is some data");
     let node = node.clone();
-    assert_eq!(node.name.as_deref(), Some("Node 1"));
+    assert_eq!(node.name.as_deref(), Some("Node"));
     match &node.data {
       NodeData::Text(s) => assert_eq!(s, "This is some data"),
       _ => panic!("Expected NodeData::Text"),
@@ -263,10 +264,10 @@ mod tests {
   #[test]
   fn test_cycle_detection() {
     let mut graph = AcyclicGraph::new("Test Graph");
-    let (node1_uuid, _) = graph.add_node("Node 1".to_string(), ());
-    let (node2_uuid, _) = graph.add_node("Node 2".to_string(), ());
-    assert!(graph.add_child(node1_uuid, node2_uuid).is_ok());
-    let result = graph.add_child(node2_uuid, node1_uuid);
+    let (parent_uuid, _) = graph.add_node("Parent".to_string(), ());
+    let (child_uuid, _) = graph.add_node("Child".to_string(), ());
+    assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
+    let result = graph.add_child(child_uuid, parent_uuid);
     assert!(matches!(result, Err(Error::Cycle { .. })));
   }
 
@@ -291,12 +292,23 @@ mod tests {
 
   #[test]
   fn test_dot_format() {
-    todo!();
+    let mut graph = AcyclicGraph::new("Test Graph");
+    let (parent_uuid, _) = graph.add_node("Parent".to_string(), ());
+    let (child_uuid, _) = graph.add_node("Child".to_string(), ());
+    assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
+    let dot_output = format!("{}", graph.dot());
+    dot_parser::ast::Graph::try_from(dot_output.as_str()).expect("DOT format is invalid");
   }
 
   #[test]
   fn test_mermaid_format() {
-    todo!();
+    let mut graph = AcyclicGraph::new("Test Graph");
+    let (parent_uuid, _) = graph.add_node("Parent".to_string(), ());
+    let (child_uuid, _) = graph.add_node("Child".to_string(), ());
+    assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
+    let _mermaid_output = format!("{}", graph.mermaid());
+    // No standard parser for Mermaid, so we just ensure it generates without
+    // error FIXME
   }
 
   #[test]
