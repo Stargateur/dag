@@ -26,12 +26,12 @@ pub enum Error {
 }
 
 #[derive(Debug, Clone)]
-pub struct Graph {
+pub struct AcyclicGraph {
   name: String,
   nodes: HashMap<Uuid, Node>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Node {
   name: Option<String>,
   data: NodeData,
@@ -52,7 +52,7 @@ impl Node {
   }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum NodeData {
   Number(u64),
   Text(String),
@@ -83,7 +83,7 @@ impl From<()> for NodeData {
   }
 }
 
-impl Graph {
+impl AcyclicGraph {
   pub fn new(name: impl Into<String>) -> Self {
     Self {
       name: name.into(),
@@ -186,12 +186,13 @@ impl Graph {
 }
 
 pub struct Dot<'a> {
-  graph: &'a Graph,
+  graph: &'a AcyclicGraph,
 }
 
 impl Display for Dot<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "digraph \"{}\" {{\n", self.graph.name)?;
+    write!(f, "  graph [rankdir = \"LR\"]\n\n")?;
     for parent in &self.graph.nodes {
       write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
 
@@ -210,23 +211,101 @@ impl Display for Dot<'_> {
 }
 
 pub struct Mermaid<'a> {
-  graph: &'a Graph,
+  graph: &'a AcyclicGraph,
 }
 
 impl Display for Mermaid<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    write!(f, "flowchart \"{}\" {{\n", self.graph.name)?;
+    write!(f, "---\ntitle: {}\n---\n", self.graph.name)?;
+    write!(f, "flowchart LR\n")?;
     for parent in &self.graph.nodes {
-      write!(f, "  \"{}\"\n", ShortUuid::from_uuid(parent.0))?;
+      write!(f, "  {}", ShortUuid::from_uuid(parent.0))?;
 
       let mut childrens = parent.1.childs.iter();
       if let Some(child) = childrens.next() {
-        write!(f, "  --> \"{}\"", ShortUuid::from_uuid(child))?;
+        write!(f, "  --> {}", ShortUuid::from_uuid(child))?;
         for child in childrens {
-          write!(f, " & \"{}\"", ShortUuid::from_uuid(child))?;
+          write!(f, " & {}", ShortUuid::from_uuid(child))?;
         }
       }
+      write!(f, "\n")?;
     }
-    write!(f, "\n")
+    Ok(())
+  }
+}
+
+#[cfg(test)]
+mod tests {
+  use super::*;
+  #[test]
+  fn test_add_node() {
+    let mut graph = AcyclicGraph::new("Test Graph");
+    let (uuid, node) = graph.add_node("Node 1".to_string(), "This is some data");
+    let node = node.clone();
+    assert_eq!(node.name.as_deref(), Some("Node 1"));
+    match &node.data {
+      NodeData::Text(s) => assert_eq!(s, "This is some data"),
+      _ => panic!("Expected NodeData::Text"),
+    }
+    assert_eq!(graph.get_node(uuid), Some(&node));
+  }
+
+  #[test]
+  fn test_add_child() {
+    let mut graph = AcyclicGraph::new("Test Graph");
+    let (parent_uuid, _) = graph.add_node("Parent".to_string(), ());
+    let (child_uuid, _) = graph.add_node("Child".to_string(), ());
+    assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
+    let parent_node = graph.get_node(parent_uuid).unwrap();
+    assert!(parent_node.childs.contains(&child_uuid));
+  }
+
+  #[test]
+  fn test_cycle_detection() {
+    let mut graph = AcyclicGraph::new("Test Graph");
+    let (node1_uuid, _) = graph.add_node("Node 1".to_string(), ());
+    let (node2_uuid, _) = graph.add_node("Node 2".to_string(), ());
+    assert!(graph.add_child(node1_uuid, node2_uuid).is_ok());
+    let result = graph.add_child(node2_uuid, node1_uuid);
+    assert!(matches!(result, Err(Error::Cycle { .. })));
+  }
+
+  #[test]
+  fn test_child_already_exist() {
+    let mut graph = AcyclicGraph::new("Test Graph");
+    let (parent_uuid, _) = graph.add_node("Parent".to_string(), ());
+    let (child_uuid, _) = graph.add_node("Child".to_string(), ());
+    assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
+    let result = graph.add_child(parent_uuid, child_uuid);
+    assert!(matches!(result, Err(Error::ChildAlreadyExist { .. })));
+  }
+
+  #[test]
+  fn test_uuid_not_found() {
+    let mut graph = AcyclicGraph::new("Test Graph");
+    let (node_uuid, _) = graph.add_node("Node".to_string(), ());
+    let fake_uuid = Uuid::new_v4();
+    let result = graph.add_child(node_uuid, fake_uuid);
+    assert!(matches!(result, Err(Error::UuidNotFound { .. })));
+  }
+
+  #[test]
+  fn test_dot_format() {
+    todo!();
+  }
+
+  #[test]
+  fn test_mermaid_format() {
+    todo!();
+  }
+
+  #[test]
+  fn test_parents() {
+    let mut graph = AcyclicGraph::new("Test Graph");
+    let (parent_uuid, _) = graph.add_node("Parent".to_string(), ());
+    let (child_uuid, _) = graph.add_node("Child".to_string(), ());
+    assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
+    let parents = graph.parents();
+    assert!(parents.get(&child_uuid).unwrap().contains(&parent_uuid));
   }
 }

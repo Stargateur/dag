@@ -1,17 +1,22 @@
 use rand::{
   SeedableRng,
   rngs::StdRng,
-  seq::{IndexedRandom, SliceRandom},
+  seq::SliceRandom,
 };
-use rand_distr::{Distribution, Normal};
-use snafu::{ResultExt, Snafu};
-use uuid::Uuid;
+use rand_distr::{
+  Distribution,
+  Normal,
+};
+use snafu::{
+  ResultExt,
+  Snafu,
+};
 
-use crate::graph::Graph;
+use crate::graph::AcyclicGraph;
 
 pub struct Config {
   pub name: String,
-  pub depth: usize,
+  pub deepth: usize,
   pub width_mean: f64,
   pub width_std: f64,
   pub child_mean: f64,
@@ -24,7 +29,8 @@ pub enum Error {
   RandNormalDistribution { source: rand_distr::NormalError },
 }
 
-pub fn generate(cfg: Config) -> Result<Graph, Error> {
+// This will generate a sinple graph that look like a family tree
+pub fn generate(cfg: &Config) -> Result<AcyclicGraph, Error> {
   let mut rng = if let Some(seed) = cfg.seed {
     StdRng::seed_from_u64(seed)
   } else {
@@ -36,12 +42,12 @@ pub fn generate(cfg: Config) -> Result<Graph, Error> {
   let child_dist =
     Normal::new(cfg.child_mean, cfg.child_std).context(RandNormalDistributionSnafu)?;
 
-  let mut graph = Graph::new(cfg.name);
+  let mut graph = AcyclicGraph::new(cfg.name.clone());
 
   let root = graph.add_node("Root".to_string(), "I'm the root of all evil");
   let mut todo = vec![root.0];
 
-  for _ in 1..cfg.depth {
+  for _ in 1..cfg.deepth {
     let n = width_dist.sample(&mut rng).round().max(1.0) as usize;
 
     let mut next_todo = Vec::with_capacity(n);
@@ -51,6 +57,7 @@ pub fn generate(cfg: Config) -> Result<Graph, Error> {
       let k = child_dist.sample(&mut rng).round().max(0.0) as usize;
 
       for _ in 0..k {
+        // limit total width
         if i >= n {
           break;
         } else {
