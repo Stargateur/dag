@@ -24,8 +24,6 @@ pub fn validator(graph: &AcyclicGraph, cfg: &Config) -> Result<(), ()> {
   let average_childs = childs_count as f64 / nodes_with_child_count as f64;
 
   let parents = graph.parents();
-  let deepths = deepths(graph, &parents);
-  let max_deepth = deepths.values().copied().max().unwrap_or(0);
 
   let roots = roots(graph, &parents);
   eprintln!("Validation results:");
@@ -37,7 +35,12 @@ pub fn validator(graph: &AcyclicGraph, cfg: &Config) -> Result<(), ()> {
     return Err(());
   };
 
-  let average_width = average_width_without_root(graph, root);
+  let levels = levels(graph, root);
+  let deepths = deepths(&levels);
+  let max_deepth = deepths.values().copied().max().unwrap_or(0);
+  let average_deepth = deepths.values().copied().sum::<usize>() as f64 / deepths.len() as f64;
+
+  let average_width = average_width_without_root(&levels);
   if have_only_one_path(graph, root) {
     eprintln!(" - Graph have only one path to each node");
   } else {
@@ -45,12 +48,13 @@ pub fn validator(graph: &AcyclicGraph, cfg: &Config) -> Result<(), ()> {
     return Err(());
   }
   eprintln!(
-    " - Average childs per node with child: {:.2} (expected {:.2})",
+    " - Average childs per node with child: {:.2} (expected average {:.2})",
     average_childs, cfg.child_mean
   );
-  eprintln!(" - Max deepth expect {} + 1 == {}", max_deepth, cfg.deepth);
+  eprintln!(" - Max deepth expect {} + 1 <= {}", max_deepth, cfg.deepth);
+  eprintln!(" - Average deepth {:.2}", average_deepth);
   eprintln!(
-    " - Average width without root level: {:.2} (max {:.2})",
+    " - Average width without root level: {:.2} (expected average {:.2})",
     average_width, cfg.width_mean
   );
 
@@ -58,39 +62,12 @@ pub fn validator(graph: &AcyclicGraph, cfg: &Config) -> Result<(), ()> {
 }
 
 // could be more simple if we assume root, but this way is more general
-fn deepths(graph: &AcyclicGraph, parents: &HashMap<Uuid, HashSet<Uuid>>) -> HashMap<Uuid, usize> {
-  let mut max_deepth = HashMap::new();
-  let mut queue = HashSet::new();
-
-  for (uuid, node) in graph.nodes().iter() {
-    if node.childs().is_empty() {
-      max_deepth.insert(*uuid, 0);
-      queue.insert(*uuid);
-    }
-  }
-
-  let mut current_deepth = 1;
-  let mut next_queue = HashSet::new();
-  while !queue.is_empty() {
-    next_queue.clear();
-
-    for uuid in &queue {
-      if let Some(parents) = parents.get(uuid) {
-        for parent in parents {
-          max_deepth
-            .entry(*parent)
-            .and_modify(|deepth| *deepth = (*deepth).max(current_deepth))
-            .or_insert(current_deepth);
-          next_queue.insert(*parent);
-        }
-      }
-    }
-
-    current_deepth += 1;
-    std::mem::swap(&mut queue, &mut next_queue);
-  }
-
-  max_deepth
+fn deepths(levels: &Vec<Vec<Uuid>>) -> HashMap<Uuid, usize> {
+  levels
+    .iter()
+    .enumerate()
+    .flat_map(|(i, level)| level.iter().map(move |&uuid| (uuid, i)))
+    .collect()
 }
 
 // level existance mean root exist
@@ -116,8 +93,7 @@ fn levels(graph: &AcyclicGraph, root: Uuid) -> Vec<Vec<Uuid>> {
   levels
 }
 
-fn average_width_without_root(graph: &AcyclicGraph, root: Uuid) -> f64 {
-  let levels = levels(graph, root);
+fn average_width_without_root(levels: &Vec<Vec<Uuid>>) -> f64 {
   let total_width: usize = levels.iter().skip(1).map(|level| level.len()).sum();
   total_width as f64 / (levels.len() - 1) as f64
 }
