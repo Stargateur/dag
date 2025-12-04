@@ -9,7 +9,7 @@ cargo run > output.mermaid
 Use https://mermaid.live to visualize the output.
 
 ```bash
-cargo run --format dot > output.dot
+cargo run -- --format dot > output.dot
 ```
 
 Use https://www.devtoolsdaily.com/graphviz to visualize the output.
@@ -17,6 +17,7 @@ Use https://www.devtoolsdaily.com/graphviz to visualize the output.
 Full help:
 
 ```bash
+cargo run -- --help
 Usage: dag.exe [OPTIONS]
 
 Options:
