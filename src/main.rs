@@ -31,8 +31,8 @@ pub struct Args {
   #[arg(long, default_value = "mermaid")]
   format: Format,
 
-  #[arg(long, default_value_t = rand::rng().random())]
-  seed: u64,
+  #[arg(long)]
+  seed: Option<u64>,
 
   #[arg(long)]
   name: Option<String>,
@@ -47,6 +47,7 @@ enum Format {
 
 fn main() {
   let args = Args::parse();
+  let seed = args.seed.unwrap_or_else(|| rand::rng().random());
 
   let config = generator::Config {
     deepth: args.deepth.into(),
@@ -54,7 +55,7 @@ fn main() {
     width_std: args.child_dev,
     child_mean: args.child_mean,
     child_std: args.child_dev,
-    seed: args.seed,
+    seed,
     name: args.name,
   };
 
@@ -74,5 +75,5 @@ fn main() {
     Err(_) => eprintln!("FAIL"),
   }
 
-  eprintln!("Seed used: {}", args.seed);
+  eprintln!("Seed used: {}", seed);
 }
