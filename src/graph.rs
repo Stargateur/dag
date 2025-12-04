@@ -207,13 +207,13 @@ pub struct Dot<'a> {
 
 impl Display for Dot<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    writeln!(f, "digraph {} {{", self.graph.name)?;
+    writeln!(f, "digraph \"{}\" {{", self.graph.name)?;
     writeln!(f, "  node [shape = box]")?;
     write!(f, "  graph [rankdir = TB]\n\n")?;
     for parent in self.graph.nodes.iter().sorted_by_key(|node| node.0) {
       write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
       if let Some(name) = &parent.1.name {
-        write!(f, " [label = {name}]")?;
+        write!(f, " [label = \"{name}\"]")?;
       }
       writeln!(f, ";")?;
 
@@ -339,8 +339,8 @@ mod tests {
   node [shape = box]
   graph [rankdir = TB]
 
-  "cDe6M3HmMtiJnhL4ihtnyx" [label = Child];
-  "m43pF1xXxnZvhCY1VeAnMV" [label = Parent];
+  "cDe6M3HmMtiJnhL4ihtnyx" [label = "Child"];
+  "m43pF1xXxnZvhCY1VeAnMV" [label = "Parent"];
   "m43pF1xXxnZvhCY1VeAnMV" -> {"cDe6M3HmMtiJnhL4ihtnyx"};
 }
 "###;
