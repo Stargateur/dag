@@ -86,9 +86,9 @@ flowchart TB
 
 ## Technical
 
-- We use UUID to identify nodes, this is not the fastest way, but it's allow to have uniques identifiers for a give subtree, this allows to potentially share a subtree with other graphs easily.
+- We use UUID to identify nodes, this is not the fastest way, but it's allow to have uniques identifiers for a given subtree, this allows to potentially share a subtree with other graphs easily.
 - The links are represented as a hash map from parent to child. It's allow to easily navigate all children from a node.
-- The graph generation use a seedable RNG of u64, so you can reproduce the same graph by providing the same seed. This is not the most robust way, but this is just a toy project and the generation is not critical, so user-friendly solution was better. The output is also sorted to have deterministic output.
+- The graph generation use a seedable RNG of u64, so you can reproduce the same graph by providing the same seed. This is not the most robust way, but this is just a toy project and the generation is not critical, so user-friendly solution was better. The nodes and edges are also sorted to have deterministic output.
 - No non-tail recursion is used, to avoid stack overflow for big graphs.
 - We use `snafu` for error handling, `clap` for argument parsing, `rand` for random generation, `uuid` for unique identifiers, `short-uuid` to have shorter UUID representation, `petname` to generate random names, and `itertools` for some iterator utilities.
 - Overall, performance was not a goal for this project, flexibility were prioritized.
