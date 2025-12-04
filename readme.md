@@ -70,69 +70,6 @@ flowchart TB
   w281jq9iQxCuU8xs77JvM5[tayra] --> aRQ5cLet3rjLF3Zk1Xps7D & kmGcjrc3YDUzNhpz2qvxfF & mE3jNQtbafxCer66MBtu3E & t67D2eb3aNGp5YrTMjzCtd
   wb6GNo9goeTGSVLVSnBJNJ[genet]
   wAESX1UmyiMdQ96WZgoBdh[lionfish] --> ideoG9HY96kM1dbDfxWhmt & oLf3XTuPGqxxVVmdcUuGvt
-  ```
-
-  ```dot
-  digraph celestial_markhor {
-  node [shape = box]
-  graph [rankdir = TB]
-
-  "142SyegJajYu4tNWUUqmCF" [label = sloth];
-  "3bAZnw7tThC5uzoBLeAQyS" [label = ling];
-  "3bAZnw7tThC5uzoBLeAQyS" -> {"q7nMqk6SwZqZxawuba67Ar"};
-  "4bDRgBiLCoByHNYnHXyitG" [label = bullsnake];
-  "4bDRgBiLCoByHNYnHXyitG" -> {"6xsKgmQUz9jorMhsMsMscL" "mYH2tNieABT45MpUpGGpvu"};
-  "53wd7hgxPNbEHMNMH55rVS" [label = falconet];
-  "5fdJQ6usRSf2EsSEG8SyDo" [label = beagle];
-  "6xsKgmQUz9jorMhsMsMscL" [label = raven];
-  "6xsKgmQUz9jorMhsMsMscL" -> {"142SyegJajYu4tNWUUqmCF" "7pfe5TYZtx5VSfXDj7GwS4" "nuKWkTLC7D9ko356oYPzVf" "qKK22KHKX1yHmUs1DEhWZB"};
-  "6HKWmh5KRAVkqzDSu6ktqt" [label = ocelot];
-  "7pfe5TYZtx5VSfXDj7GwS4" [label = ghoul];
-  "7KsjAG2r9VskEVsDbDMjmz" [label = tick];
-  "7KsjAG2r9VskEVsDbDMjmz" -> {"5fdJQ6usRSf2EsSEG8SyDo" "r2YPoxZ53TtcD7bSHzv4Kk" "w281jq9iQxCuU8xs77JvM5"};
-  "8pDfEv1ocNFFhCYipXrnHM" [label = hare];
-  "aCAvoEqeoSRLrHNU3guYkv" [label = killifish];
-  "aRQ5cLet3rjLF3Zk1Xps7D" [label = rattlesnake];
-  "bMievjBuDCFrCbrG2GD2ob" [label = rattlesnake];
-  "grPhSfEp2g8Nn1bnaPvesX" [label = Root];
-  "grPhSfEp2g8Nn1bnaPvesX" -> {"6HKWmh5KRAVkqzDSu6ktqt" "pFMrn38FeFRB2fZ63wAZFF" "rqadrE5HH5PoHfFvVLgp7E" "rFkmJA16GBrSRvvbQWp8Mk" "uXQL5XgHFESZ9jAfStJw6A"};
-  "ideoG9HY96kM1dbDfxWhmt" [label = krait];
-  "kmGcjrc3YDUzNhpz2qvxfF" [label = sheep];
-  "mE3jNQtbafxCer66MBtu3E" [label = greenling];
-  "mYH2tNieABT45MpUpGGpvu" [label = hamster];
-  "nuKWkTLC7D9ko356oYPzVf" [label = wahoo];
-  "nXLCTiSWaLRNUFRPB3HVXo" [label = protozoa];
-  "oJFbVprS5SqGyRJnKpLGgZ" [label = tern];
-  "oLf3XTuPGqxxVVmdcUuGvt" [label = hammerhead];
-  "oLf3XTuPGqxxVVmdcUuGvt" -> {"bMievjBuDCFrCbrG2GD2ob" "q4bpwNd51EE9yHLFvdrbGK"};
-  "pFMrn38FeFRB2fZ63wAZFF" [label = pigfish];
-  "pFMrn38FeFRB2fZ63wAZFF" -> {"7KsjAG2r9VskEVsDbDMjmz" "rP5PXDrC7LRrHWxYMaBn6g" "s21QCfTURepkLYw5ZZXYpK"};
-  "q4bpwNd51EE9yHLFvdrbGK" [label = coati];
-  "q7nMqk6SwZqZxawuba67Ar" [label = leafhopper];
-  "qKK22KHKX1yHmUs1DEhWZB" [label = moonfish];
-  "qZLhVRH5GFgKPNWHK4SGc6" [label = eel];
-  "r2YPoxZ53TtcD7bSHzv4Kk" [label = bluefish];
-  "rqadrE5HH5PoHfFvVLgp7E" [label = manakin];
-  "rqadrE5HH5PoHfFvVLgp7E" -> {"8pDfEv1ocNFFhCYipXrnHM" "ui5UymBhxySHZsjEsABSMo" "wb6GNo9goeTGSVLVSnBJNJ"};
-  "rFkmJA16GBrSRvvbQWp8Mk" [label = muskox];
-  "rFkmJA16GBrSRvvbQWp8Mk" -> {"4bDRgBiLCoByHNYnHXyitG" "oJFbVprS5SqGyRJnKpLGgZ" "qZLhVRH5GFgKPNWHK4SGc6"};
-  "rP5PXDrC7LRrHWxYMaBn6g" [label = cotinga];
-  "s21QCfTURepkLYw5ZZXYpK" [label = gourami];
-  "s21QCfTURepkLYw5ZZXYpK" -> {"3bAZnw7tThC5uzoBLeAQyS" "53wd7hgxPNbEHMNMH55rVS" "nXLCTiSWaLRNUFRPB3HVXo" "tPGH9UrhTnqjsL2VRGcabQ"};
-  "t67D2eb3aNGp5YrTMjzCtd" [label = moray];
-  "tPGH9UrhTnqjsL2VRGcabQ" [label = spittlebug];
-  "u7yJNd3dQQKhsYCYaaudRM" [label = cankerworm];
-  "u7yJNd3dQQKhsYCYaaudRM" -> {"aCAvoEqeoSRLrHNU3guYkv"};
-  "ui5UymBhxySHZsjEsABSMo" [label = chickadee];
-  "uXQL5XgHFESZ9jAfStJw6A" [label = elver];
-  "uXQL5XgHFESZ9jAfStJw6A" -> {"u7yJNd3dQQKhsYCYaaudRM" "vAYrg1Hg1VCaVFd73rmsbS" "wAESX1UmyiMdQ96WZgoBdh"};
-  "vAYrg1Hg1VCaVFd73rmsbS" [label = cricket];
-  "w281jq9iQxCuU8xs77JvM5" [label = tayra];
-  "w281jq9iQxCuU8xs77JvM5" -> {"aRQ5cLet3rjLF3Zk1Xps7D" "kmGcjrc3YDUzNhpz2qvxfF" "mE3jNQtbafxCer66MBtu3E" "t67D2eb3aNGp5YrTMjzCtd"};
-  "wb6GNo9goeTGSVLVSnBJNJ" [label = genet];
-  "wAESX1UmyiMdQ96WZgoBdh" [label = lionfish];
-  "wAESX1UmyiMdQ96WZgoBdh" -> {"ideoG9HY96kM1dbDfxWhmt" "oLf3XTuPGqxxVVmdcUuGvt"};
-}
 ```
 
 ## Technical
