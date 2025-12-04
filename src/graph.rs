@@ -207,7 +207,7 @@ pub struct Dot<'a> {
 
 impl Display for Dot<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    writeln!(f, "digraph \"{}\" {{", self.graph.name)?;
+    writeln!(f, "digraph {} {{", self.graph.name)?;
     writeln!(f, "  node [shape = box]")?;
     write!(f, "  graph [rankdir = TB]\n\n")?;
     for parent in self.graph.nodes.iter().sorted_by_key(|node| node.0) {

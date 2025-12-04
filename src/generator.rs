@@ -1,6 +1,5 @@
 use petname::Generator;
 use rand::{
-  Rng,
   SeedableRng,
   rngs::StdRng,
   seq::SliceRandom,
