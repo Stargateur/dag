@@ -28,7 +28,7 @@ pub enum Error {
 #[derive(Debug, Clone)]
 pub struct Graph {
   name: String,
-  pub nodes: HashMap<Uuid, Node>,
+  nodes: HashMap<Uuid, Node>,
 }
 
 #[derive(Debug, Clone)]
@@ -45,6 +45,10 @@ impl Node {
       data,
       childs: HashSet::new(),
     }
+  }
+
+  pub fn childs(&self) -> &HashSet<Uuid> {
+    &self.childs
   }
 }
 
@@ -85,6 +89,10 @@ impl Graph {
       name: name.into(),
       nodes: HashMap::new(),
     }
+  }
+
+  pub fn nodes(&self) -> &HashMap<Uuid, Node> {
+    &self.nodes
   }
 
   pub fn add_node(
@@ -163,6 +171,18 @@ impl Graph {
   pub fn mermaid(&self) -> Mermaid {
     Mermaid { graph: self }
   }
+
+  pub fn parents(&self) -> HashMap<Uuid, HashSet<Uuid>> {
+    let mut parents: HashMap<Uuid, HashSet<Uuid>> = HashMap::new();
+
+    for (&uuid, node) in &self.nodes {
+      for &child in &node.childs {
+        parents.entry(child).or_default().insert(uuid);
+      }
+    }
+
+    parents
+  }
 }
 
 pub struct Dot<'a> {
@@ -173,13 +193,13 @@ impl Display for Dot<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "digraph \"{}\" {{\n", self.graph.name)?;
     for parent in &self.graph.nodes {
-      write!(f, "  {}", ShortUuid::from_uuid(parent.0))?;
+      write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
 
       let mut childrens = parent.1.childs.iter();
       if let Some(first) = childrens.next() {
-        write!(f, "  -> {{{}", ShortUuid::from_uuid(first))?;
+        write!(f, "  -> {{\"{}\"", ShortUuid::from_uuid(first))?;
         for child in childrens {
-          write!(f, " {}", ShortUuid::from_uuid(child))?;
+          write!(f, " \"{}\"", ShortUuid::from_uuid(child))?;
         }
         write!(f, "}}")?;
       }
@@ -197,13 +217,13 @@ impl Display for Mermaid<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     write!(f, "flowchart \"{}\" {{\n", self.graph.name)?;
     for parent in &self.graph.nodes {
-      write!(f, "  {}\n", ShortUuid::from_uuid(parent.0))?;
+      write!(f, "  \"{}\"\n", ShortUuid::from_uuid(parent.0))?;
 
       let mut childrens = parent.1.childs.iter();
       if let Some(child) = childrens.next() {
-        write!(f, "  --> {}", ShortUuid::from_uuid(child))?;
+        write!(f, "  --> \"{}\"", ShortUuid::from_uuid(child))?;
         for child in childrens {
-          write!(f, " & {}", ShortUuid::from_uuid(child))?;
+          write!(f, " & \"{}\"", ShortUuid::from_uuid(child))?;
         }
       }
     }

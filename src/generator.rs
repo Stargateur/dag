@@ -1,16 +1,10 @@
 use rand::{
   SeedableRng,
   rngs::StdRng,
-  seq::IndexedRandom,
+  seq::{IndexedRandom, SliceRandom},
 };
-use rand_distr::{
-  Distribution,
-  Normal,
-};
-use snafu::{
-  ResultExt,
-  Snafu,
-};
+use rand_distr::{Distribution, Normal};
+use snafu::{ResultExt, Snafu};
 use uuid::Uuid;
 
 use crate::graph::Graph;
@@ -39,37 +33,36 @@ pub fn generate(cfg: Config) -> Result<Graph, Error> {
 
   let width_dist =
     Normal::new(cfg.width_mean, cfg.width_std).context(RandNormalDistributionSnafu)?;
-  let conn_dist =
+  let child_dist =
     Normal::new(cfg.child_mean, cfg.child_std).context(RandNormalDistributionSnafu)?;
 
   let mut graph = Graph::new(cfg.name);
-  let mut levels: Vec<Vec<Uuid>> = vec![];
 
   let root = graph.add_node("Root".to_string(), "I'm the root of all evil");
-  levels.push(vec![root.0]);
+  let mut todo = vec![root.0];
 
   for _ in 1..cfg.depth {
     let n = width_dist.sample(&mut rng).round().max(1.0) as usize;
-    let mut nodes = Vec::with_capacity(n);
 
-    for _ in 0..n {
-      let node = graph.add_node(None, ());
-      nodes.push(node.0);
-    }
+    let mut next_todo = Vec::with_capacity(n);
+    let mut i = 0;
+    todo.shuffle(&mut rng);
+    for node in todo {
+      let k = child_dist.sample(&mut rng).round().max(0.0) as usize;
 
-    levels.push(nodes);
-  }
-
-  for level in 0..cfg.depth - 1 {
-    let potencial_child: Vec<Uuid> = levels[level + 1].iter().copied().collect();
-
-    for &node in &levels[level] {
-      let k = conn_dist.sample(&mut rng).round().max(0.0) as usize;
-
-      for &child in potencial_child.choose_multiple(&mut rng, k) {
-        graph.add_child(node, child).unwrap();
+      for _ in 0..k {
+        if i >= n {
+          break;
+        } else {
+          i += 1;
+        }
+        let (uuid, _) = graph.add_node(None, ());
+        graph.add_child(node, uuid).unwrap();
+        next_todo.push(uuid);
       }
     }
+
+    todo = next_todo;
   }
 
   Ok(graph)

@@ -1,5 +1,6 @@
 mod generator;
 mod graph;
+mod validator;
 
 use std::num::NonZeroUsize;
 
@@ -7,7 +8,7 @@ use clap::Parser;
 
 #[derive(Parser, Debug)]
 pub struct Args {
-  #[arg(long, default_value_t = NonZeroUsize::new(3).unwrap())]
+  #[arg(long, default_value_t = NonZeroUsize::new(5).unwrap())]
   depth_max: NonZeroUsize,
 
   #[arg(long, default_value_t = 10.0)]
