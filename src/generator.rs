@@ -19,9 +19,9 @@ pub struct Config {
   pub name: Option<String>,
   pub deepth: usize,
   pub width_mean: f64,
-  pub width_std: f64,
+  pub width_std_dev: f64,
   pub child_mean: f64,
-  pub child_std: f64,
+  pub child_std_dev: f64,
   pub seed: u64,
 }
 
@@ -37,9 +37,9 @@ pub fn generate(cfg: &Config) -> Result<AcyclicGraph, Error> {
   let petnames = petname::Petnames::default();
 
   let width_dist =
-    Normal::new(cfg.width_mean, cfg.width_std).context(RandNormalDistributionSnafu)?;
+    Normal::new(cfg.width_mean, cfg.width_std_dev).context(RandNormalDistributionSnafu)?;
   let child_dist =
-    Normal::new(cfg.child_mean, cfg.child_std).context(RandNormalDistributionSnafu)?;
+    Normal::new(cfg.child_mean, cfg.child_std_dev).context(RandNormalDistributionSnafu)?;
 
   let name = cfg.name.as_ref().cloned().unwrap_or_else(|| {
     petnames

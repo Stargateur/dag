@@ -18,7 +18,7 @@ pub struct Args {
   width_mean: f64,
 
   #[arg(long, default_value_t = 0.5)]
-  width_std: f64,
+  width_std_dev: f64,
 
   #[arg(long, default_value_t = 3.0)]
   #[arg(alias = "connexions_moyennes")]
@@ -26,7 +26,7 @@ pub struct Args {
 
   #[arg(long, default_value_t = 1.0)]
   #[arg(alias = "ecart_type_connexions")]
-  child_dev: f64,
+  child_std_dev: f64,
 
   #[arg(long, default_value = "mermaid")]
   format: Format,
@@ -52,9 +52,9 @@ fn main() {
   let config = generator::Config {
     deepth: args.deepth.into(),
     width_mean: args.width_mean,
-    width_std: args.child_dev,
+    width_std_dev: args.child_std_dev,
     child_mean: args.child_mean,
-    child_std: args.child_dev,
+    child_std_dev: args.child_std_dev,
     seed,
     name: args.name,
   };
@@ -75,5 +75,5 @@ fn main() {
     Err(_) => eprintln!("FAIL"),
   }
 
-  eprintln!("Seed used: {}", seed);
+  eprintln!("Seed used: {seed}");
 }

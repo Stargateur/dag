@@ -16,20 +16,20 @@ Use https://www.devtoolsdaily.com/graphviz to visualize the output.
 
 Full help:
 
-```bash
+```none
 cargo run -- --help
 Usage: dag.exe [OPTIONS]
 
 Options:
-      --deepth <DEEPTH>          [default: 5]
-      --width-mean <WIDTH_MEAN>  [default: 10]
-      --width-std <WIDTH_STD>    [default: 0.5]
-      --child-mean <CHILD_MEAN>  [default: 3]
-      --child-dev <CHILD_DEV>    [default: 1]
-      --format <FORMAT>          [default: mermaid] [possible values: dot, mermaid, both]
+      --deepth <DEEPTH>                [default: 5]
+      --width-mean <WIDTH_MEAN>        [default: 10]
+      --width-std-dev <WIDTH_STD_DEV>  [default: 0.5]
+      --child-mean <CHILD_MEAN>        [default: 3]
+      --child-std-dev <CHILD_STD_DEV>  [default: 1]
+      --format <FORMAT>                [default: mermaid] [possible values: dot, mermaid, both]
       --seed <SEED>
       --name <NAME>
-  -h, --help                     Print help
+  -h, --help                           Print help
 ```
 
 ## Examples
