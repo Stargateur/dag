@@ -119,6 +119,7 @@ impl AcyclicGraph {
     self.add_node_uuid(uuid, name, data)
   }
 
+  #[allow(dead_code)]
   pub fn add_node(
     &mut self, name: impl Into<Option<String>>, data: impl Into<NodeData>,
   ) -> (Uuid, &Node) {
@@ -207,12 +208,12 @@ pub struct Dot<'a> {
 impl Display for Dot<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     writeln!(f, "digraph \"{}\" {{", self.graph.name)?;
-    write!(f, "  node [shape = box]\n")?;
+    writeln!(f, "  node [shape = box]")?;
     write!(f, "  graph [rankdir = TB]\n\n")?;
     for parent in self.graph.nodes.iter().sorted_by_key(|node| node.0) {
       write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
       if let Some(name) = &parent.1.name {
-        write!(f, " [label=\"{}\"];\n", name)?;
+        writeln!(f, " [label=\"{name}\"];")?;
         write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
       }
 
@@ -236,16 +237,16 @@ pub struct Mermaid<'a> {
 
 impl Display for Mermaid<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-    write!(f, "---\n")?;
-    write!(f, "title: {}\n", self.graph.name)?;
-    write!(f, "flowchart:\n")?;
-    write!(f, "  curve: stepAfter\n")?;
-    write!(f, "---\n")?;
-    write!(f, "flowchart TB\n")?;
+    writeln!(f, "---")?;
+    writeln!(f, "title: {}", self.graph.name)?;
+    writeln!(f, "flowchart:")?;
+    writeln!(f, "  curve: stepAfter")?;
+    writeln!(f, "---")?;
+    writeln!(f, "flowchart TB")?;
     for parent in self.graph.nodes.iter().sorted_by_key(|node| node.0) {
       write!(f, "  {}", ShortUuid::from_uuid(parent.0))?;
       if let Some(name) = &parent.1.name {
-        write!(f, "[{}]", name)?;
+        write!(f, "[{name}]")?;
       }
 
       let mut childrens = parent.1.childs.iter().sorted();
