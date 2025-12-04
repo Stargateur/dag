@@ -5,6 +5,7 @@ mod validator;
 use std::num::NonZeroUsize;
 
 use clap::Parser;
+use rand::Rng;
 
 #[derive(Parser, Debug)]
 pub struct Args {
@@ -30,8 +31,8 @@ pub struct Args {
   #[arg(long, default_value = "mermaid")]
   format: Format,
 
-  #[arg(long)]
-  seed: Option<u64>,
+  #[arg(long, default_value_t = rand::rng().random())]
+  seed: u64,
 
   #[arg(long)]
   name: Option<String>,
@@ -72,4 +73,6 @@ fn main() {
     Ok(_) => eprintln!("OK"),
     Err(_) => eprintln!("FAIL"),
   }
+
+  eprintln!("Seed used: {}", args.seed);
 }

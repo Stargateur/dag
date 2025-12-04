@@ -1,5 +1,6 @@
 use petname::Generator;
 use rand::{
+  Rng,
   SeedableRng,
   rngs::StdRng,
   seq::SliceRandom,
@@ -22,7 +23,7 @@ pub struct Config {
   pub width_std: f64,
   pub child_mean: f64,
   pub child_std: f64,
-  pub seed: Option<u64>,
+  pub seed: u64,
 }
 
 #[derive(Snafu, Debug)]
@@ -30,13 +31,9 @@ pub enum Error {
   RandNormalDistribution { source: rand_distr::NormalError },
 }
 
-// This will generate a sinple graph that look like a family tree
+/// This will generate a sinple graph that look like a family tree
 pub fn generate(cfg: &Config) -> Result<AcyclicGraph, Error> {
-  let mut rng = if let Some(seed) = cfg.seed {
-    StdRng::seed_from_u64(seed)
-  } else {
-    StdRng::from_rng(&mut rand::rng())
-  };
+  let mut rng = StdRng::seed_from_u64(cfg.seed);
 
   let petnames = petname::Petnames::default();
 
