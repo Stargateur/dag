@@ -52,7 +52,7 @@ pub fn generate(cfg: &Config) -> Result<AcyclicGraph, Error> {
   });
   let mut graph = AcyclicGraph::new(name);
 
-  let root = graph.add_node("Root".to_string(), "I'm the root of all evil");
+  let root = graph.add_node_with_rng("Root".to_string(), "I'm the root of all evil", &mut rng);
   let mut todo = vec![root.0];
 
   for _ in 1..cfg.deepth {
@@ -72,7 +72,7 @@ pub fn generate(cfg: &Config) -> Result<AcyclicGraph, Error> {
           i += 1;
         }
         let name = petnames.generate(&mut rng, 1, "_");
-        let (uuid, _) = graph.add_node(name, ());
+        let (uuid, _) = graph.add_node_with_rng(name, (), &mut rng);
         graph.add_child(node, uuid).unwrap();
         next_todo.push(uuid);
       }

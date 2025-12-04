@@ -11,6 +11,7 @@ uuid = { version = "1.19", features = ["v4"] }
 short-uuid = "0.2"
 snafu = "0.8"
 petname = "=3.0.0-alpha.2"
+itertools = "0.14"
 
 [dev-dependencies]
 dot-parser = "0.6"

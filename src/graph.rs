@@ -11,6 +11,8 @@ use std::{
   },
 };
 
+use itertools::Itertools;
+use rand::Rng;
 use short_uuid::ShortUuid;
 use snafu::Snafu;
 use uuid::Uuid;
@@ -95,10 +97,9 @@ impl AcyclicGraph {
     &self.nodes
   }
 
-  pub fn add_node(
-    &mut self, name: impl Into<Option<String>>, data: impl Into<NodeData>,
+  fn add_node_uuid(
+    &mut self, uuid: Uuid, name: impl Into<Option<String>>, data: impl Into<NodeData>,
   ) -> (Uuid, &Node) {
-    let uuid = Uuid::new_v4();
     match self.nodes.entry(uuid) {
       std::collections::hash_map::Entry::Vacant(vacant) => {
         let node = Node::new(name, data.into());
@@ -108,6 +109,20 @@ impl AcyclicGraph {
         panic!("UUID collision detected");
       }
     }
+  }
+
+  pub fn add_node_with_rng(
+    &mut self, name: impl Into<Option<String>>, data: impl Into<NodeData>,
+    rng: &mut impl rand::RngCore,
+  ) -> (Uuid, &Node) {
+    let uuid = uuid::Builder::from_random_bytes(rng.random()).into_uuid();
+    self.add_node_uuid(uuid, name, data)
+  }
+
+  pub fn add_node(
+    &mut self, name: impl Into<Option<String>>, data: impl Into<NodeData>,
+  ) -> (Uuid, &Node) {
+    self.add_node_uuid(Uuid::new_v4(), name, data)
   }
 
   fn is_cycle(&self, src: Uuid, dst: Uuid) -> Result<(), Error> {
@@ -194,14 +209,14 @@ impl Display for Dot<'_> {
     writeln!(f, "digraph \"{}\" {{", self.graph.name)?;
     write!(f, "  node [shape = box]\n")?;
     write!(f, "  graph [rankdir = TB]\n\n")?;
-    for parent in &self.graph.nodes {
+    for parent in self.graph.nodes.iter().sorted_by_key(|node| node.0) {
       write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
       if let Some(name) = &parent.1.name {
         write!(f, " [label=\"{}\"];\n", name)?;
         write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
       }
 
-      let mut childrens = parent.1.childs.iter();
+      let mut childrens = parent.1.childs.iter().sorted();
       if let Some(first) = childrens.next() {
         write!(f, "  -> {{\"{}\"", ShortUuid::from_uuid(first))?;
         for child in childrens {
@@ -227,13 +242,13 @@ impl Display for Mermaid<'_> {
     write!(f, "  curve: stepAfter\n")?;
     write!(f, "---\n")?;
     write!(f, "flowchart TB\n")?;
-    for parent in &self.graph.nodes {
+    for parent in self.graph.nodes.iter().sorted_by_key(|node| node.0) {
       write!(f, "  {}", ShortUuid::from_uuid(parent.0))?;
       if let Some(name) = &parent.1.name {
         write!(f, "[{}]", name)?;
       }
 
-      let mut childrens = parent.1.childs.iter();
+      let mut childrens = parent.1.childs.iter().sorted();
       if let Some(child) = childrens.next() {
         write!(f, "  --> {}", ShortUuid::from_uuid(child))?;
         for child in childrens {
