@@ -1,0 +1,12 @@
+[package]
+name = "dag"
+version = "0.0.0"
+edition = "2024"
+
+[dependencies]
+rand = { version = "0.9", features = ["alloc"] }
+rand_distr = "0.5"
+clap = { version = "4.4", features = ["derive"] }
+uuid = { version = "1.19", features = ["v4"] }
+short-uuid = "0.2"
+snafu = "0.8"
