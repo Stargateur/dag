@@ -15,3 +15,4 @@ itertools = "0.14"
 
 [dev-dependencies]
 dot-parser = "0.6"
+pretty_assertions = "1.4"

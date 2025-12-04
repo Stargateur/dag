@@ -213,19 +213,23 @@ impl Display for Dot<'_> {
     for parent in self.graph.nodes.iter().sorted_by_key(|node| node.0) {
       write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
       if let Some(name) = &parent.1.name {
-        writeln!(f, " [label=\"{name}\"];")?;
-        write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
+        write!(f, " [label = {name}]")?;
       }
+      writeln!(f, ";")?;
 
       let mut childrens = parent.1.childs.iter().sorted();
       if let Some(first) = childrens.next() {
-        write!(f, "  -> {{\"{}\"", ShortUuid::from_uuid(first))?;
+        write!(
+          f,
+          "  \"{}\" -> {{\"{}\"",
+          ShortUuid::from_uuid(parent.0),
+          ShortUuid::from_uuid(first)
+        )?;
         for child in childrens {
           write!(f, " \"{}\"", ShortUuid::from_uuid(child))?;
         }
-        write!(f, "}}")?;
+        writeln!(f, "}};")?;
       }
-      writeln!(f, ";")?;
     }
     writeln!(f, "}}")
   }
@@ -239,8 +243,6 @@ impl Display for Mermaid<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     writeln!(f, "---")?;
     writeln!(f, "title: {}", self.graph.name)?;
-    writeln!(f, "flowchart:")?;
-    writeln!(f, "  curve: stepAfter")?;
     writeln!(f, "---")?;
     writeln!(f, "flowchart TB")?;
     for parent in self.graph.nodes.iter().sorted_by_key(|node| node.0) {
@@ -251,7 +253,7 @@ impl Display for Mermaid<'_> {
 
       let mut childrens = parent.1.childs.iter().sorted();
       if let Some(child) = childrens.next() {
-        write!(f, "  --> {}", ShortUuid::from_uuid(child))?;
+        write!(f, " --> {}", ShortUuid::from_uuid(child))?;
         for child in childrens {
           write!(f, " & {}", ShortUuid::from_uuid(child))?;
         }
@@ -264,6 +266,11 @@ impl Display for Mermaid<'_> {
 
 #[cfg(test)]
 mod tests {
+  use rand::{
+    SeedableRng,
+    rngs::StdRng,
+  };
+
   use super::*;
 
   #[test]
@@ -320,23 +327,43 @@ mod tests {
 
   #[test]
   fn test_dot_format() {
+    let mut rng = StdRng::seed_from_u64(42);
     let mut graph = AcyclicGraph::new("Test Graph");
-    let (parent_uuid, _) = graph.add_node("Parent".to_string(), ());
-    let (child_uuid, _) = graph.add_node("Child".to_string(), ());
+    let (parent_uuid, _) = graph.add_node_with_rng("Parent".to_string(), (), &mut rng);
+    let (child_uuid, _) = graph.add_node_with_rng("Child".to_string(), (), &mut rng);
     assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
     let dot_output = format!("{}", graph.dot());
     dot_parser::ast::Graph::try_from(dot_output.as_str()).expect("DOT format is invalid");
+
+    let expected_output = r###"digraph "Test Graph" {
+  node [shape = box]
+  graph [rankdir = TB]
+
+  "cDe6M3HmMtiJnhL4ihtnyx" [label = Child];
+  "m43pF1xXxnZvhCY1VeAnMV" [label = Parent];
+  "m43pF1xXxnZvhCY1VeAnMV" -> {"cDe6M3HmMtiJnhL4ihtnyx"};
+}
+"###;
+    pretty_assertions::assert_eq!(dot_output, expected_output);
   }
 
   #[test]
   fn test_mermaid_format() {
+    let mut rng = StdRng::seed_from_u64(42);
     let mut graph = AcyclicGraph::new("Test Graph");
-    let (parent_uuid, _) = graph.add_node("Parent".to_string(), ());
-    let (child_uuid, _) = graph.add_node("Child".to_string(), ());
+    let (parent_uuid, _) = graph.add_node_with_rng("Parent".to_string(), (), &mut rng);
+    let (child_uuid, _) = graph.add_node_with_rng("Child".to_string(), (), &mut rng);
     assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
-    let _mermaid_output = format!("{}", graph.mermaid());
-    // No standard parser for Mermaid, so we just ensure it generates without
-    // error FIXME
+    let mermaid_output = format!("{}", graph.mermaid());
+
+    let expected_output = r###"---
+title: Test Graph
+---
+flowchart TB
+  cDe6M3HmMtiJnhL4ihtnyx[Child]
+  m43pF1xXxnZvhCY1VeAnMV[Parent] --> cDe6M3HmMtiJnhL4ihtnyx
+"###;
+    pretty_assertions::assert_eq!(mermaid_output, expected_output);
   }
 
   #[test]
