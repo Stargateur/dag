@@ -24,7 +24,8 @@ pub fn validator(graph: &AcyclicGraph, cfg: &Config) -> Result<(), ()> {
   let average_childs = childs_count as f64 / nodes_with_child_count as f64;
 
   let parents = graph.parents();
-  let max_deepth = max_deepth(graph, &parents);
+  let deepths = deepths(graph, &parents);
+  let max_deepth = deepths.values().copied().max().unwrap_or(0);
 
   let roots = roots(graph, &parents);
   eprintln!("Validation results:");
@@ -69,8 +70,9 @@ fn deepths(graph: &AcyclicGraph, parents: &HashMap<Uuid, HashSet<Uuid>>) -> Hash
   }
 
   let mut current_deepth = 1;
+  let mut next_queue = HashSet::new();
   while !queue.is_empty() {
-    let mut next_queue = HashSet::new();
+    next_queue.clear();
 
     for uuid in &queue {
       if let Some(parents) = parents.get(uuid) {
@@ -89,10 +91,6 @@ fn deepths(graph: &AcyclicGraph, parents: &HashMap<Uuid, HashSet<Uuid>>) -> Hash
   }
 
   max_deepth
-}
-
-fn max_deepth(graph: &AcyclicGraph, parents: &HashMap<Uuid, HashSet<Uuid>>) -> usize {
-  deepths(graph, parents).values().copied().max().unwrap_or(0)
 }
 
 // level existance mean root exist

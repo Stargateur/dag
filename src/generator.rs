@@ -49,32 +49,33 @@ pub fn generate(cfg: &Config) -> Result<AcyclicGraph, Error> {
   let mut graph = AcyclicGraph::new(name);
 
   let root = graph.add_node_with_rng("Root".to_string(), "I'm the root of all evil", &mut rng);
-  let mut todo = vec![root.0];
+  let mut current = vec![root.0];
+  let mut next = Vec::new();
 
   for _ in 1..cfg.deepth {
     let n = width_dist.sample(&mut rng).round().max(1.0) as usize;
 
-    let mut next_todo = Vec::with_capacity(n);
+    next.clear();
     let mut i = 0;
-    todo.shuffle(&mut rng);
-    for node in todo {
+    current.shuffle(&mut rng);
+    'outer: for &node in &current {
       let k = child_dist.sample(&mut rng).round().max(0.0) as usize;
 
       for _ in 0..k {
         // limit total width
         if i >= n {
-          break;
+          break 'outer;
         } else {
           i += 1;
         }
         let name = petnames.generate(&mut rng, 1, "_");
         let (uuid, _) = graph.add_node_with_rng(name, (), &mut rng);
         graph.add_child(node, uuid).unwrap();
-        next_todo.push(uuid);
+        next.push(uuid);
       }
     }
 
-    todo = next_todo;
+    std::mem::swap(&mut current, &mut next);
   }
 
   Ok(graph)
