@@ -17,11 +17,10 @@ Use https://www.devtoolsdaily.com/graphviz to visualize the output.
 Full help:
 
 ```none
-cargo run -- --help
 Usage: dag.exe [OPTIONS]
 
 Options:
-      --deepth <DEEPTH>                [default: 5]
+      --depth <DEPTH>                  [default: 5]
       --width-mean <WIDTH_MEAN>        [default: 10]
       --width-std-dev <WIDTH_STD_DEV>  [default: 0.5]
       --child-mean <CHILD_MEAN>        [default: 3]

@@ -17,7 +17,7 @@ use crate::graph::AcyclicGraph;
 
 pub struct Config {
   pub name: Option<String>,
-  pub deepth: usize,
+  pub depth: usize,
   pub width_mean: f64,
   pub width_std_dev: f64,
   pub child_mean: f64,
@@ -52,7 +52,7 @@ pub fn generate(cfg: &Config) -> Result<AcyclicGraph, Error> {
   let mut current = vec![root.0];
   let mut next = Vec::new();
 
-  for _ in 1..cfg.deepth {
+  for _ in 1..cfg.depth {
     let n = width_dist.sample(&mut rng).round().max(1.0) as usize;
 
     next.clear();

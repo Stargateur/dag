@@ -36,9 +36,9 @@ pub fn validator(graph: &AcyclicGraph, cfg: &Config) -> Result<(), ()> {
   };
 
   let levels = levels(graph, root);
-  let deepths = deepths(&levels);
-  let max_deepth = deepths.values().copied().max().unwrap_or(0);
-  let average_deepth = deepths.values().copied().sum::<usize>() as f64 / deepths.len() as f64;
+  let depths = depths(&levels);
+  let max_depth = depths.values().copied().max().unwrap_or(0);
+  let average_depth = depths.values().copied().sum::<usize>() as f64 / depths.len() as f64;
 
   let average_width = average_width_without_root(&levels);
   if have_only_one_path(graph, root) {
@@ -51,8 +51,8 @@ pub fn validator(graph: &AcyclicGraph, cfg: &Config) -> Result<(), ()> {
     " - Average childs per node with child: {:.2} (expected average {:.2})",
     average_childs, cfg.child_mean
   );
-  eprintln!(" - Max deepth expect {} + 1 <= {}", max_deepth, cfg.deepth);
-  eprintln!(" - Average deepth {:.2}", average_deepth);
+  eprintln!(" - Max depth expect {} + 1 <= {}", max_depth, cfg.depth);
+  eprintln!(" - Average depth {average_depth:.2}");
   eprintln!(
     " - Average width without root level: {:.2} (expected average {:.2})",
     average_width, cfg.width_mean
@@ -62,7 +62,7 @@ pub fn validator(graph: &AcyclicGraph, cfg: &Config) -> Result<(), ()> {
 }
 
 // could be more simple if we assume root, but this way is more general
-fn deepths(levels: &Vec<Vec<Uuid>>) -> HashMap<Uuid, usize> {
+fn depths(levels: &[Vec<Uuid>]) -> HashMap<Uuid, usize> {
   levels
     .iter()
     .enumerate()
@@ -93,7 +93,7 @@ fn levels(graph: &AcyclicGraph, root: Uuid) -> Vec<Vec<Uuid>> {
   levels
 }
 
-fn average_width_without_root(levels: &Vec<Vec<Uuid>>) -> f64 {
+fn average_width_without_root(levels: &[Vec<Uuid>]) -> f64 {
   let total_width: usize = levels.iter().skip(1).map(|level| level.len()).sum();
   total_width as f64 / (levels.len() - 1) as f64
 }

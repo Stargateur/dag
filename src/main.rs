@@ -11,7 +11,7 @@ use rand::Rng;
 pub struct Args {
   #[arg(long, default_value_t = NonZeroUsize::new(5).unwrap())]
   #[arg(alias = "profondeur_max")]
-  deepth: NonZeroUsize,
+  depth: NonZeroUsize,
 
   #[arg(long, default_value_t = 10.0)]
   #[arg(alias = "largeur_moyenne")]
@@ -50,9 +50,9 @@ fn main() {
   let seed = args.seed.unwrap_or_else(|| rand::rng().random());
 
   let config = generator::Config {
-    deepth: args.deepth.into(),
+    depth: args.depth.into(),
     width_mean: args.width_mean,
-    width_std_dev: args.child_std_dev,
+    width_std_dev: args.width_std_dev,
     child_mean: args.child_mean,
     child_std_dev: args.child_std_dev,
     seed,
@@ -60,6 +60,8 @@ fn main() {
   };
 
   let graph = generator::generate(&config).unwrap();
+
+  eprintln!("done generate");
 
   match args.format {
     Format::Dot => print!("{}", graph.dot()),
