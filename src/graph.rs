@@ -23,8 +23,8 @@ pub enum Error {
   Cycle { src: Uuid, dst: Uuid },
   #[snafu(display("UUID not found: {uuid}"))]
   UuidNotFound { uuid: Uuid },
-  #[snafu(display("Child already exist from {src} to {dst}"))]
-  ChildAlreadyExist { src: Uuid, dst: Uuid },
+  #[snafu(display("Child already exist from {parent} to {child}"))]
+  ChildAlreadyExist { parent: Uuid, child: Uuid },
 }
 
 #[derive(Debug, Clone)]
@@ -126,13 +126,16 @@ impl AcyclicGraph {
     self.add_node_uuid(Uuid::new_v4(), name, data)
   }
 
-  fn check_cycle(&self, src: Uuid, dst: Uuid) -> Result<(), Error> {
-    let mut queue = VecDeque::from([dst]);
-    let mut queued = HashSet::from([dst]);
+  fn check_cycle(&self, parent: Uuid, child: Uuid) -> Result<(), Error> {
+    let mut queue = VecDeque::from([child]);
+    let mut queued = HashSet::from([child]);
 
     while let Some(current) = queue.pop_front() {
-      if current == src {
-        return Err(Error::Cycle { src, dst });
+      if current == parent {
+        return Err(Error::Cycle {
+          src: parent,
+          dst: child,
+        });
       }
 
       if let Some(node) = self.nodes.get(&current) {
@@ -165,12 +168,12 @@ impl AcyclicGraph {
     }
   }
 
-  pub fn add_child(&mut self, src: Uuid, dst: Uuid) -> Result<(), Error> {
-    self.check_cycle(src, dst)?;
-    if self.get_node_mut(src)?.childs.insert(dst) {
+  pub fn add_child(&mut self, parent: Uuid, child: Uuid) -> Result<(), Error> {
+    self.check_cycle(parent, child)?;
+    if self.get_node_mut(parent)?.childs.insert(child) {
       Ok(())
     } else {
-      Err(Error::ChildAlreadyExist { src, dst })
+      Err(Error::ChildAlreadyExist { parent, child })
     }
   }
 
@@ -203,14 +206,17 @@ impl Display for Dot<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     writeln!(f, "digraph \"{}\" {{", self.graph.name)?;
     writeln!(f, "  node [shape = box]")?;
-    write!(f, "  graph [rankdir = TB]\n\n")?;
+    writeln!(f, "  graph [rankdir = TB]")?;
+    writeln!(f)?;
     for parent in self.graph.nodes.iter().sorted_by_key(|node| node.0) {
+      // Node
       write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
       if let Some(name) = &parent.1.name {
         write!(f, " [label = \"{name}\"]")?;
       }
       writeln!(f, ";")?;
 
+      // Childs
       let mut childrens = parent.1.childs.iter().sorted();
       if let Some(first) = childrens.next() {
         write!(
@@ -225,6 +231,7 @@ impl Display for Dot<'_> {
         writeln!(f, "}};")?;
       }
     }
+
     writeln!(f, "}}")
   }
 }
@@ -237,14 +244,17 @@ impl Display for Mermaid<'_> {
   fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
     writeln!(f, "---")?;
     writeln!(f, "title: {}", self.graph.name)?;
+
     writeln!(f, "---")?;
     writeln!(f, "flowchart TB")?;
     for parent in self.graph.nodes.iter().sorted_by_key(|node| node.0) {
+      // Node
       write!(f, "  {}", ShortUuid::from_uuid(parent.0))?;
       if let Some(name) = &parent.1.name {
         write!(f, "[{name}]")?;
       }
 
+      // Childrens
       let mut childrens = parent.1.childs.iter().sorted();
       if let Some(child) = childrens.next() {
         write!(f, " --> {}", ShortUuid::from_uuid(child))?;
