@@ -17,7 +17,7 @@ use short_uuid::ShortUuid;
 use snafu::Snafu;
 use uuid::Uuid;
 
-#[derive(Debug, Snafu)]
+#[derive(Debug, Snafu, PartialEq)]
 pub enum Error {
   #[snafu(display("Cycle detected {src} => {dst}"))]
   Cycle { src: Uuid, dst: Uuid },
@@ -126,7 +126,7 @@ impl AcyclicGraph {
     self.add_node_uuid(Uuid::new_v4(), name, data)
   }
 
-  fn is_cycle(&self, src: Uuid, dst: Uuid) -> Result<(), Error> {
+  fn check_cycle(&self, src: Uuid, dst: Uuid) -> Result<(), Error> {
     let mut queue = VecDeque::from([dst]);
     let mut queued = HashSet::from([dst]);
 
@@ -141,39 +141,33 @@ impl AcyclicGraph {
             queue.push_back(child);
           }
         }
+      } else {
+        return Err(Error::UuidNotFound { uuid: current });
       }
     }
 
     Ok(())
   }
 
-  pub fn get_node(&self, uuid: Uuid) -> Option<&Node> {
-    self.nodes.get(&uuid)
-  }
-
-  pub fn get_node_mut(&mut self, uuid: Uuid) -> Option<&mut Node> {
-    self.nodes.get_mut(&uuid)
-  }
-
-  pub fn check_node_exist(&self, uuid: Uuid) -> Result<(), Error> {
-    if self.get_node(uuid).is_none() {
-      Err(Error::UuidNotFound { uuid })
+  pub fn get_node(&self, uuid: Uuid) -> Result<&Node, Error> {
+    if let Some(node) = self.nodes.get(&uuid) {
+      Ok(node)
     } else {
-      Ok(())
+      Err(Error::UuidNotFound { uuid })
     }
   }
 
-  pub fn check_nodes_exist(&self, uuids: &[Uuid]) -> Result<(), Error> {
-    for &uuid in uuids {
-      self.check_node_exist(uuid)?;
+  pub fn get_node_mut(&mut self, uuid: Uuid) -> Result<&mut Node, Error> {
+    if let Some(node) = self.nodes.get_mut(&uuid) {
+      Ok(node)
+    } else {
+      Err(Error::UuidNotFound { uuid })
     }
-    Ok(())
   }
 
   pub fn add_child(&mut self, src: Uuid, dst: Uuid) -> Result<(), Error> {
-    self.check_nodes_exist(&[src, dst])?;
-    self.is_cycle(src, dst)?;
-    if self.get_node_mut(src).unwrap().childs.insert(dst) {
+    self.check_cycle(src, dst)?;
+    if self.get_node_mut(src)?.childs.insert(dst) {
       Ok(())
     } else {
       Err(Error::ChildAlreadyExist { src, dst })
@@ -283,7 +277,7 @@ mod tests {
       NodeData::Text(s) => assert_eq!(s, "This is some data"),
       _ => panic!("Expected NodeData::Text"),
     }
-    assert_eq!(graph.get_node(uuid), Some(&node));
+    assert_eq!(graph.get_node(uuid), Ok(&node));
   }
 
   #[test]

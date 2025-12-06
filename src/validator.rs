@@ -114,7 +114,7 @@ fn have_only_one_path(graph: &AcyclicGraph, root: Uuid) -> bool {
   queue.push_back(root);
   visited.insert(root);
   while let Some(current) = queue.pop_front() {
-    if let Some(node) = graph.get_node(current) {
+    if let Ok(node) = graph.get_node(current) {
       for &child in node.childs() {
         if visited.insert(child) {
           queue.push_back(child);

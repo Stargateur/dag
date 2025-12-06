@@ -13,7 +13,10 @@ use snafu::{
   Snafu,
 };
 
-use crate::graph::AcyclicGraph;
+use crate::graph::{
+  self,
+  AcyclicGraph,
+};
 
 pub struct Config {
   pub name: Option<String>,
@@ -28,6 +31,7 @@ pub struct Config {
 #[derive(Snafu, Debug)]
 pub enum Error {
   RandNormalDistribution { source: rand_distr::NormalError },
+  AcyclicGraph { source: graph::Error },
 }
 
 /// This will generate a sinple graph that look like a family tree
@@ -70,7 +74,7 @@ pub fn generate(cfg: &Config) -> Result<AcyclicGraph, Error> {
         }
         let name = petnames.generate(&mut rng, 1, "_");
         let (uuid, _) = graph.add_node_with_rng(name, (), &mut rng);
-        graph.add_child(node, uuid).unwrap();
+        graph.add_child(node, uuid).context(AcyclicGraphSnafu {})?;
         next.push(uuid);
       }
     }
