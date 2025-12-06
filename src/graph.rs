@@ -35,16 +35,14 @@ pub struct AcyclicGraph {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Node {
-  name: Option<String>,
   data: NodeData,
   childs: HashSet<Uuid>,
 }
 
 impl Node {
-  pub fn new(name: impl Into<Option<String>>, data: NodeData) -> Self {
+  pub fn new(data: impl Into<NodeData>) -> Self {
     Self {
-      name: name.into(),
-      data,
+      data: data.into(),
       childs: HashSet::new(),
     }
   }
@@ -61,6 +59,20 @@ pub enum NodeData {
   None,
 }
 
+impl Default for NodeData {
+  fn default() -> Self {
+    Self::None
+  }
+}
+
+// impl Display for NodeData {
+//     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+//         match  {
+
+//         }
+//     }
+// }
+
 impl From<u64> for NodeData {
   fn from(n: u64) -> Self {
     NodeData::Number(n)
@@ -70,6 +82,12 @@ impl From<u64> for NodeData {
 impl From<String> for NodeData {
   fn from(s: String) -> Self {
     NodeData::Text(s)
+  }
+}
+
+impl From<Option<String>> for NodeData {
+  fn from(s: Option<String>) -> Self {
+    s.map(NodeData::from).unwrap_or_default()
   }
 }
 
@@ -97,14 +115,10 @@ impl AcyclicGraph {
     &self.nodes
   }
 
-  fn add_node_uuid(
-    &mut self, uuid: Uuid, name: impl Into<Option<String>>, data: impl Into<NodeData>,
-  ) -> (Uuid, &Node) {
+  fn add_node_uuid(&mut self, uuid: Uuid, data: impl Into<NodeData>) -> (Uuid, &Node) {
+    let node = Node::new(data);
     match self.nodes.entry(uuid) {
-      std::collections::hash_map::Entry::Vacant(vacant) => {
-        let node = Node::new(name, data.into());
-        (uuid, vacant.insert(node))
-      }
+      std::collections::hash_map::Entry::Vacant(vacant) => (uuid, vacant.insert(node)),
       std::collections::hash_map::Entry::Occupied(_) => {
         panic!("UUID collision detected");
       }
@@ -112,18 +126,15 @@ impl AcyclicGraph {
   }
 
   pub fn add_node_with_rng(
-    &mut self, name: impl Into<Option<String>>, data: impl Into<NodeData>,
-    rng: &mut impl rand::RngCore,
+    &mut self, data: impl Into<NodeData>, rng: &mut impl rand::RngCore,
   ) -> (Uuid, &Node) {
     let uuid = uuid::Builder::from_random_bytes(rng.random()).into_uuid();
-    self.add_node_uuid(uuid, name, data)
+    self.add_node_uuid(uuid, data)
   }
 
   #[allow(dead_code)]
-  pub fn add_node(
-    &mut self, name: impl Into<Option<String>>, data: impl Into<NodeData>,
-  ) -> (Uuid, &Node) {
-    self.add_node_uuid(Uuid::new_v4(), name, data)
+  pub fn add_node(&mut self, data: impl Into<NodeData>) -> (Uuid, &Node) {
+    self.add_node_uuid(Uuid::new_v4(), data)
   }
 
   fn check_cycle(&self, parent: Uuid, child: Uuid) -> Result<(), Error> {
@@ -211,8 +222,10 @@ impl Display for Dot<'_> {
     for parent in self.graph.nodes.iter().sorted_by_key(|node| node.0) {
       // Node
       write!(f, "  \"{}\"", ShortUuid::from_uuid(parent.0))?;
-      if let Some(name) = &parent.1.name {
-        write!(f, " [label = \"{name}\"]")?;
+      match &parent.1.data {
+        NodeData::Number(n) => write!(f, " [label = \"{n}\"]")?,
+        NodeData::Text(t) => write!(f, " [label = \"{t}\"]")?,
+        NodeData::None => {}
       }
       writeln!(f, ";")?;
 
@@ -250,8 +263,10 @@ impl Display for Mermaid<'_> {
     for parent in self.graph.nodes.iter().sorted_by_key(|node| node.0) {
       // Node
       write!(f, "  {}", ShortUuid::from_uuid(parent.0))?;
-      if let Some(name) = &parent.1.name {
-        write!(f, "[{name}]")?;
+      match &parent.1.data {
+        NodeData::Number(n) => write!(f, "[{n}]")?,
+        NodeData::Text(t) => write!(f, "[{t}]")?,
+        NodeData::None => {}
       }
 
       // Childrens
@@ -280,9 +295,9 @@ mod tests {
   #[test]
   fn test_add_node() {
     let mut graph = AcyclicGraph::new("Test Graph");
-    let (uuid, node) = graph.add_node("Node".to_string(), "This is some data");
+    let (uuid, node) = graph.add_node("Node".to_string());
     let node = node.clone();
-    assert_eq!(node.name.as_deref(), Some("Node"));
+    assert_eq!(node.data, "Node".into());
     match &node.data {
       NodeData::Text(s) => assert_eq!(s, "This is some data"),
       _ => panic!("Expected NodeData::Text"),
@@ -293,8 +308,8 @@ mod tests {
   #[test]
   fn test_add_child() {
     let mut graph = AcyclicGraph::new("Test Graph");
-    let (parent_uuid, _) = graph.add_node("Parent".to_string(), ());
-    let (child_uuid, _) = graph.add_node("Child".to_string(), ());
+    let (parent_uuid, _) = graph.add_node("Parent".to_string());
+    let (child_uuid, _) = graph.add_node("Child".to_string());
     assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
     let parent_node = graph.get_node(parent_uuid).unwrap();
     assert!(parent_node.childs.contains(&child_uuid));
@@ -303,8 +318,8 @@ mod tests {
   #[test]
   fn test_cycle_detection() {
     let mut graph = AcyclicGraph::new("Test Graph");
-    let (parent_uuid, _) = graph.add_node("Parent".to_string(), ());
-    let (child_uuid, _) = graph.add_node("Child".to_string(), ());
+    let (parent_uuid, _) = graph.add_node("Parent".to_string());
+    let (child_uuid, _) = graph.add_node("Child".to_string());
     assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
     let result = graph.add_child(child_uuid, parent_uuid);
     assert!(matches!(result, Err(Error::Cycle { .. })));
@@ -313,8 +328,8 @@ mod tests {
   #[test]
   fn test_child_already_exist() {
     let mut graph = AcyclicGraph::new("Test Graph");
-    let (parent_uuid, _) = graph.add_node("Parent".to_string(), ());
-    let (child_uuid, _) = graph.add_node("Child".to_string(), ());
+    let (parent_uuid, _) = graph.add_node("Parent".to_string());
+    let (child_uuid, _) = graph.add_node("Child".to_string());
     assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
     let result = graph.add_child(parent_uuid, child_uuid);
     assert!(matches!(result, Err(Error::ChildAlreadyExist { .. })));
@@ -323,7 +338,7 @@ mod tests {
   #[test]
   fn test_uuid_not_found() {
     let mut graph = AcyclicGraph::new("Test Graph");
-    let (node_uuid, _) = graph.add_node("Node".to_string(), ());
+    let (node_uuid, _) = graph.add_node("Node".to_string());
     let fake_uuid = Uuid::new_v4();
     let result = graph.add_child(node_uuid, fake_uuid);
     assert!(matches!(result, Err(Error::UuidNotFound { .. })));
@@ -333,8 +348,8 @@ mod tests {
   fn test_dot_format() {
     let mut rng = StdRng::seed_from_u64(42);
     let mut graph = AcyclicGraph::new("Test Graph");
-    let (parent_uuid, _) = graph.add_node_with_rng("Parent".to_string(), (), &mut rng);
-    let (child_uuid, _) = graph.add_node_with_rng("Child".to_string(), (), &mut rng);
+    let (parent_uuid, _) = graph.add_node_with_rng("Parent".to_string(), &mut rng);
+    let (child_uuid, _) = graph.add_node_with_rng("Child".to_string(), &mut rng);
     assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
     let dot_output = format!("{}", graph.dot());
     dot_parser::ast::Graph::try_from(dot_output.as_str()).expect("DOT format is invalid");
@@ -355,8 +370,8 @@ mod tests {
   fn test_mermaid_format() {
     let mut rng = StdRng::seed_from_u64(42);
     let mut graph = AcyclicGraph::new("Test Graph");
-    let (parent_uuid, _) = graph.add_node_with_rng("Parent".to_string(), (), &mut rng);
-    let (child_uuid, _) = graph.add_node_with_rng("Child".to_string(), (), &mut rng);
+    let (parent_uuid, _) = graph.add_node_with_rng("Parent".to_string(), &mut rng);
+    let (child_uuid, _) = graph.add_node_with_rng("Child".to_string(), &mut rng);
     assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
     let mermaid_output = format!("{}", graph.mermaid());
 
@@ -373,8 +388,8 @@ flowchart TB
   #[test]
   fn test_parents() {
     let mut graph = AcyclicGraph::new("Test Graph");
-    let (parent_uuid, _) = graph.add_node("Parent".to_string(), ());
-    let (child_uuid, _) = graph.add_node("Child".to_string(), ());
+    let (parent_uuid, _) = graph.add_node("Parent".to_string());
+    let (child_uuid, _) = graph.add_node("Child".to_string());
     assert!(graph.add_child(parent_uuid, child_uuid).is_ok());
     let parents = graph.parents();
     assert!(parents.get(&child_uuid).unwrap().contains(&parent_uuid));
